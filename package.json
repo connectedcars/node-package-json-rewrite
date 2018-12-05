@@ -1,0 +1,45 @@
+{
+  "name": "package-json-rewrite",
+  "version": "1.0.0",
+  "description": "Simple wrapper to inject GitHub personal access tokens into package.json on npm/yarn install",
+  "bin": {
+    "package-json-rewrite": "./bin/package-json-rewrite.js"
+  },
+  "main": "src/index.js",
+  "scripts": {
+    "test": "jest"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git@github.com:connectedcars/node-package-json-rewrite.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "@types/node": "^10.3.5",
+    "@types/jest": "^23.3.2",
+    "eslint": "^5.1.0",
+    "eslint-config-prettier": "^2.9.0",
+    "eslint-plugin-prettier": "^2.6.1",
+    "prettier": "^1.13.5",
+    "jest": "^23.6.0"
+  },
+  "jest": {
+    "roots": [
+      "<rootDir>"
+    ],
+    "testEnvironment": "node",
+    "testRegex": ".+\\.test\\.js$",
+    "collectCoverage": false,
+    "collectCoverageFrom": [
+      "**/*.{js}",
+      "!**/node_modules/**",
+      "!**/types/**"
+    ],
+    "moduleFileExtensions": [
+      "js",
+      "node"
+    ]
+  }
+}

@@ -36,7 +36,7 @@ if (
     }
 
     runProcess(`/usr/local/bin/${processName}`, processArgs).then(res => {
-      console.log(`npm exit code: ${res.code}, signal: ${res.signal}`)
+      console.log(`${processName} exit code: ${res.code}, signal: ${res.signal}`)
       restore()
       process.exit(res.code)
     })
@@ -47,7 +47,7 @@ if (
   }
 } else {
   runProcess(`/usr/local/bin/${processName}`, processArgs).then(res => {
-    console.log(`npm exit code: ${res.code}, signal: ${res.signal}`)
+    console.log(`${processName} exit code: ${res.code}, signal: ${res.signal}`)
     restore()
     process.exit(res.code)
   })

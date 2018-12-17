@@ -18,7 +18,7 @@ export PATH=/opt/connectedcars/bin:$PATH
 
 launch.json:
 
-``` json
+``` jsonc
 {
     // Use IntelliSense to learn about possible Node.js debug attributes.
     // Hover to view descriptions of existing attributes.
@@ -50,7 +50,7 @@ launch.json:
 
 settings.json:
 
-``` json
+``` jsonc
 // Place your settings in this file to overwrite default and user settings.
 {
     "eslint.autoFixOnSave": true

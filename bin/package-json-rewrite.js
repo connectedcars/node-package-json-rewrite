@@ -10,8 +10,13 @@ let githubPatToken = process.env['GITHUB_PAT']
 
 let processName = path.basename(process.argv[1])
 let processArgs = process.argv.slice(2)
-let processPath = process.env['PACKAGE_JSON_CMD'] || findCmd(process.env['PATH'], processName)
-let processEnv = { ...process.env, PACKAGE_JSON_CMD: processPath }
+let processPath = process.env['PACKAGE_JSON_REWRITE_CMD'] || findCmd(process.argv[1], process.env['PATH'], processName)
+let processEnv = { ...process.env, PACKAGE_JSON_REWRITE_CMD: processPath }
+
+// Support yocto build target
+if (processEnv['OECORE_TARGET_ARCH']) {
+  processArgs = [`--arch=${processEnv['OECORE_TARGET_ARCH']}`, ...processArgs]
+}
 
 if (process.argv[1] === __filename) {
   console.error('Need to symlink this file')
@@ -36,9 +41,8 @@ if (
         replace('package-lock.json', JSON.stringify(packageLockJSON, null, 2))
       }
     }
-
     runProcess(processPath, processArgs, { env: processEnv }).then(res => {
-      console.log(`${processName} exit code: ${res.code}, signal: ${res.signal}`)
+      console.log(`${processName} ${processArgs.join(' ')} exit code: ${res.code}, signal: ${res.signal}`)
       restore()
       process.exit(res.code)
     })
@@ -49,7 +53,7 @@ if (
   }
 } else {
   runProcess(processPath, processArgs, { env: processEnv }).then(res => {
-    console.log(`${processName} exit code: ${res.code}, signal: ${res.signal}`)
+    console.log(`${processName} ${processArgs.join(' ')} exit code: ${res.code}, signal: ${res.signal}`)
     restore()
     process.exit(res.code)
   })

@@ -1,4 +1,5 @@
-let fs = require('fs')
+const fs = require('fs')
+const path = require('path')
 
 const providers = {
   github: 'github.com'
@@ -66,10 +67,14 @@ function replaceUrl(url, token) {
   return url.replace(/^git\+ssh:\/\/git(@github.com)/, `git+https://${token}:$1`)
 }
 
-function findCmd(envPath, cmd) {
-  let paths = envPath.split(/[:;]/)
-  for (let path of paths) {
-    let fullPath = `${path}/${cmd}`
+function findCmd(self, envPath, cmd) {
+  let selfPath = path.normalize(self)
+  let runPaths = envPath.split(/[:;]/)
+  for (let runPath of runPaths) {
+    let fullPath = path.normalize(`${runPath}/${cmd}`)
+    if (fullPath === selfPath) {
+      continue
+    }
     if (!fs.existsSync(fullPath)) {
       continue
     }

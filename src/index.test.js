@@ -58,6 +58,6 @@ test('replace all github: semver with https', () => {
 })
 
 test('findCmd', () => {
-  let path = findCmd(`${__dirname}/../bin:${__dirname}`, 'package-json-rewrite.js')
-  expect(path).toMatch(/package-json-rewrite.js$/)
+  let path = findCmd(`${__dirname}/npm`, `${__dirname}/../bin:${__dirname}`, 'npm')
+  expect(path).toMatch(/npm$/)
 })

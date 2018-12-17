@@ -1,4 +1,4 @@
-const { packageJSONRewrite } = require('.')
+const { packageJSONRewrite, findCmd } = require('.')
 
 test('replace all git+ssh with https', () => {
   let packageJSON = {
@@ -55,4 +55,9 @@ test('replace all github: semver with https', () => {
         'git+https://ACCESSTOKENHERE:@github.com/connectedcars/some-project.git#semver:^v1.0.0'
     }
   })
+})
+
+test('findCmd', () => {
+  let path = findCmd(`${__dirname}/../bin:${__dirname}`, 'package-json-rewrite.js')
+  expect(path).toMatch(/package-json-rewrite.js$/)
 })

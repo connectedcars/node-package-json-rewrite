@@ -4,12 +4,14 @@ const fs = require('fs')
 const path = require('path')
 const { spawn } = require('child_process')
 
-const { packageJSONRewrite, packageLockJSONRewrite } = require('../src')
+const { packageJSONRewrite, packageLockJSONRewrite, findCmd } = require('../src')
 
 let githubPatToken = process.env['GITHUB_PAT']
 
 let processName = path.basename(process.argv[1])
 let processArgs = process.argv.slice(2)
+let processPath = process.env['PACKAGE_JSON_CMD'] || findCmd(process.env['PATH'], processName)
+let processEnv = { ...process.env, PACKAGE_JSON_CMD: processPath }
 
 if (process.argv[1] === __filename) {
   console.error('Need to symlink this file')
@@ -35,7 +37,7 @@ if (
       }
     }
 
-    runProcess(`/usr/local/bin/${processName}`, processArgs).then(res => {
+    runProcess(processPath, processArgs, { env: processEnv }).then(res => {
       console.log(`${processName} exit code: ${res.code}, signal: ${res.signal}`)
       restore()
       process.exit(res.code)
@@ -46,15 +48,15 @@ if (
     process.exit(255)
   }
 } else {
-  runProcess(`/usr/local/bin/${processName}`, processArgs).then(res => {
+  runProcess(processPath, processArgs, { env: processEnv }).then(res => {
     console.log(`${processName} exit code: ${res.code}, signal: ${res.signal}`)
     restore()
     process.exit(res.code)
   })
 }
 
-function runProcess(path, processArgs) {
-  const cmd = spawn(path, processArgs, { stdio: 'inherit' })
+function runProcess(path, processArgs, options = {}) {
+  const cmd = spawn(path, processArgs, { stdio: 'inherit', ...options })
   return new Promise(resolve => {
     cmd.on('exit', (code, signal) => {
       resolve({ code, signal })

@@ -1,3 +1,5 @@
+let fs = require('fs')
+
 const providers = {
   github: 'github.com'
 }
@@ -64,4 +66,21 @@ function replaceUrl(url, token) {
   return url.replace(/^git\+ssh:\/\/git(@github.com)/, `git+https://${token}:$1`)
 }
 
-module.exports = { packageJSONRewrite, packageLockJSONRewrite }
+function findCmd(envPath, cmd) {
+  let paths = envPath.split(/[:;]/)
+  for (let path of paths) {
+    let fullPath = `${path}/${cmd}`
+    if (!fs.existsSync(fullPath)) {
+      continue
+    }
+    try {
+      fs.accessSync(fullPath, fs.constants.F_OK)
+    } catch (e) {
+      continue
+    }
+    return fullPath
+  }
+  return null
+}
+
+module.exports = { packageJSONRewrite, packageLockJSONRewrite, findCmd }

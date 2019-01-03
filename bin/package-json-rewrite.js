@@ -4,12 +4,19 @@ const fs = require('fs')
 const path = require('path')
 const { spawn } = require('child_process')
 
-const { packageJSONRewrite, packageLockJSONRewrite } = require('../src')
+const { packageJSONRewrite, packageLockJSONRewrite, findCmd } = require('../src')
 
 let githubPatToken = process.env['GITHUB_PAT']
 
 let processName = path.basename(process.argv[1])
 let processArgs = process.argv.slice(2)
+let processPath = process.env['PACKAGE_JSON_REWRITE_CMD'] || findCmd(process.argv[1], process.env['PATH'], processName)
+let processEnv = { ...process.env, PACKAGE_JSON_REWRITE_CMD: processPath }
+
+// Support yocto build target
+if (processEnv['OECORE_TARGET_ARCH']) {
+  processArgs = [`--arch=${processEnv['OECORE_TARGET_ARCH']}`, ...processArgs]
+}
 
 if (process.argv[1] === __filename) {
   console.error('Need to symlink this file')
@@ -34,9 +41,8 @@ if (
         replace('package-lock.json', JSON.stringify(packageLockJSON, null, 2))
       }
     }
-
-    runProcess(`/usr/local/bin/${processName}`, processArgs).then(res => {
-      console.log(`${processName} exit code: ${res.code}, signal: ${res.signal}`)
+    runProcess(processPath, processArgs, { env: processEnv }).then(res => {
+      console.log(`${processName} ${processArgs.join(' ')} exit code: ${res.code}, signal: ${res.signal}`)
       restore()
       process.exit(res.code)
     })
@@ -46,15 +52,15 @@ if (
     process.exit(255)
   }
 } else {
-  runProcess(`/usr/local/bin/${processName}`, processArgs).then(res => {
-    console.log(`${processName} exit code: ${res.code}, signal: ${res.signal}`)
+  runProcess(processPath, processArgs, { env: processEnv }).then(res => {
+    console.log(`${processName} ${processArgs.join(' ')} exit code: ${res.code}, signal: ${res.signal}`)
     restore()
     process.exit(res.code)
   })
 }
 
-function runProcess(path, processArgs) {
-  const cmd = spawn(path, processArgs, { stdio: 'inherit' })
+function runProcess(path, processArgs, options = {}) {
+  const cmd = spawn(path, processArgs, { stdio: 'inherit', ...options })
   return new Promise(resolve => {
     cmd.on('exit', (code, signal) => {
       resolve({ code, signal })

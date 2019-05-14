@@ -18,10 +18,10 @@ if (process.argv[1] === __filename) {
 
 let githubPatToken = process.env['GITHUB_PAT']
 let sshKeyPath = process.env['SSH_KEY_PATH']
+let sshKeyPassword = process.env['SSH_KEY_PASSWORD']
 
 // Use SSH agent method if we have a key
-if (sshKeyPath) {
-  let sshKeyPassword = process.env['SSH_KEY_PASSWORD']
+if (sshKeyPath && sshKeyPassword) {
   ssh
     .startSshAgent()
     .then(sshAgent => {

@@ -28,9 +28,9 @@ let sshKeyPath = process.env['SSH_KEY_PATH']
 let sshKeyPassword = process.env['SSH_KEY_PASSWORD']
 
 // Clean up environment
-delete process.env['GITHUB_PAT']
-delete process.env['SSH_KEY_PATH']
-delete process.env['SSH_KEY_PASSWORD']
+delete processEnv['GITHUB_PAT']
+delete processEnv['SSH_KEY_PATH']
+delete processEnv['SSH_KEY_PASSWORD']
 
 // Use SSH agent method if we have a key
 if (sshKeyPath && sshKeyPassword) {
@@ -56,7 +56,7 @@ if (sshKeyPath && sshKeyPassword) {
       console.log(sshAgent.socket)
 
       runProcess(processPath, processArgs, {
-        env: { ...process.env, SSH_AUTH_SOCK: sshAgent.socket }
+        env: { ...processEnv, SSH_AUTH_SOCK: sshAgent.socket }
       }).then(res => {
         console.log(`${processName} exit code: ${res.code}, signal: ${res.signal}`)
         killSshAgentProcess()

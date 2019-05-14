@@ -35,12 +35,15 @@ if (sshKeyPath && sshKeyPassword) {
 
       // Load the key
       ssh.sshAddKey(sshAgent.socket, sshKeyPath, sshKeyPassword)
+      console.log('Loaded ssh keys:')
+      console.log(ssh.sshListKeys(sshAgent.socket))
 
       runProcess(`/usr/local/bin/${processName}`, processArgs).then(res => {
         console.log(`${processName} exit code: ${res.code}, signal: ${res.signal}`)
         process.exit(res.code)
       })
 
+      console.log('Closing ssh-agent:')
       console.log(sshAgent.socket)
       console.log(sshAgent.process.kill())
     })

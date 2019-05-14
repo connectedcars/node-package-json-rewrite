@@ -42,6 +42,22 @@ fi`
   return true
 }
 
+function sshListKeys(sshAuthSocket) {
+  let res = child_process.spawnSync('ssh-add', ['-L'], {
+    env: {
+      DISPLAY: ':0',
+      SSH_AUTH_SOCK: sshAuthSocket
+    },
+    stdio: null
+  })
+  if (res.status !== 0) {
+    throw new Error(
+      `Could not load ssh key (${res.status}): ${res.stdout.toString('utf8')}, ${res.stderr.toString('utf8')},`
+    )
+  }
+  return res.stdout.toString('utf8')
+}
+
 function startSshAgent() {
   let sshAgentProcess = child_process.spawn('ssh-agent', ['-D'])
   let stdout = ''
@@ -65,5 +81,6 @@ function startSshAgent() {
 
 module.exports = {
   sshAddKey,
+  sshListKeys,
   startSshAgent
 }

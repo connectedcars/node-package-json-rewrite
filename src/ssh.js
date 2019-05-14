@@ -1,4 +1,6 @@
-const tmp = require('tmp')
+const crypto = require('crypto')
+const os = require('os')
+const path = require('path')
 const fs = require('fs')
 const child_process = require('child_process')
 
@@ -7,15 +9,16 @@ const child_process = require('child_process')
  * @param {string} keyPath private ssh key
  */
 function sshAddKey(sshAuthSocket, keyPath, password = null) {
-  let tmpdir = tmp.dirSync()
-  let sshAskPassPath = `${tmpdir.name}/ssh-ask-pass`
+  let tmpdir = os.tmpdir() + path.sep + crypto.randomBytes(8).toString('hex')
+  fs.mkdirSync(tmpdir)
+  let sshAskPassPath = `${tmpdir}/ssh-ask-pass`
   fs.writeFileSync(
     sshAskPassPath,
     `#/bin/bash
 # Make sure we are only called once
-if [ ! -f "${tmpdir.name}/ssh-askpass.done" ]; then
+if [ ! -f "${tmpdir}/ssh-askpass.done" ]; then
     echo $SSH_KEY_PASSWORD
-    touch ${tmpdir.name}/ssh-askpass.done
+    touch ${tmpdir}/ssh-askpass.done
     exit 0
 else
     exit 1

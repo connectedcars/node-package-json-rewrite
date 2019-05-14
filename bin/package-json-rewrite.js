@@ -38,7 +38,9 @@ if (sshKeyPath && sshKeyPassword) {
       console.log('Loaded ssh keys:')
       console.log(ssh.sshListKeys(sshAgent.socket))
 
-      runProcess(`/usr/local/bin/${processName}`, processArgs).then(res => {
+      runProcess(`/usr/local/bin/${processName}`, processArgs, {
+        env: { ...process.env, SSH_AUTH_SOCK: sshAgent.socket }
+      }).then(res => {
         console.log(`${processName} exit code: ${res.code}, signal: ${res.signal}`)
         process.exit(res.code)
       })
@@ -88,8 +90,8 @@ if (sshKeyPath && sshKeyPassword) {
   })
 }
 
-function runProcess(path, processArgs) {
-  const cmd = spawn(path, processArgs, { stdio: 'inherit' })
+function runProcess(path, processArgs, options) {
+  const cmd = spawn(path, processArgs, { stdio: 'inherit', ...options })
   return new Promise(resolve => {
     cmd.on('exit', (code, signal) => {
       resolve({ code, signal })

@@ -4,12 +4,19 @@ const fs = require('fs')
 const path = require('path')
 const { spawn } = require('child_process')
 
-const { packageJSONRewrite, packageLockJSONRewrite } = require('../src')
+const { packageJSONRewrite, packageLockJSONRewrite, findCmd } = require('../src')
 
 let ssh = require('../src/ssh')
 
 let processName = path.basename(process.argv[1])
 let processArgs = process.argv.slice(2)
+let processPath = process.env['PACKAGE_JSON_REWRITE_CMD'] || findCmd(process.argv[1], process.env['PATH'], processName)
+let processEnv = { ...process.env, PACKAGE_JSON_REWRITE_CMD: processPath }
+
+// Support yocto build target
+if (processEnv['OECORE_TARGET_ARCH']) {
+  processArgs = [`--arch=${processEnv['OECORE_TARGET_ARCH']}`, ...processArgs]
+}
 
 if (process.argv[1] === __filename) {
   console.error('Need to symlink this file')
@@ -48,7 +55,7 @@ if (sshKeyPath && sshKeyPassword) {
       console.log(ssh.sshListKeys(sshAgent.socket))
       console.log(sshAgent.socket)
 
-      runProcess(`/usr/local/bin/${processName}`, processArgs, {
+      runProcess(processPath, processArgs, {
         env: { ...process.env, SSH_AUTH_SOCK: sshAgent.socket }
       }).then(res => {
         console.log(`${processName} exit code: ${res.code}, signal: ${res.signal}`)
@@ -79,9 +86,8 @@ if (sshKeyPath && sshKeyPassword) {
         replace('package-lock.json', JSON.stringify(packageLockJSON, null, 2))
       }
     }
-
-    runProcess(`/usr/local/bin/${processName}`, processArgs).then(res => {
-      console.log(`${processName} exit code: ${res.code}, signal: ${res.signal}`)
+    runProcess(processPath, processArgs, { env: processEnv }).then(res => {
+      console.log(`${processName} ${processArgs.join(' ')} exit code: ${res.code}, signal: ${res.signal}`)
       restore()
       process.exit(res.code)
     })
@@ -91,14 +97,14 @@ if (sshKeyPath && sshKeyPassword) {
     process.exit(255)
   }
 } else {
-  runProcess(`/usr/local/bin/${processName}`, processArgs).then(res => {
-    console.log(`${processName} exit code: ${res.code}, signal: ${res.signal}`)
+  runProcess(processPath, processArgs, { env: processEnv }).then(res => {
+    console.log(`${processName} ${processArgs.join(' ')} exit code: ${res.code}, signal: ${res.signal}`)
     restore()
     process.exit(res.code)
   })
 }
 
-function runProcess(path, processArgs, options) {
+function runProcess(path, processArgs, options = {}) {
   const cmd = spawn(path, processArgs, { stdio: 'inherit', ...options })
   return new Promise(resolve => {
     cmd.on('exit', (code, signal) => {

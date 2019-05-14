@@ -6,7 +6,7 @@ const { spawn } = require('child_process')
 
 const { packageJSONRewrite, packageLockJSONRewrite } = require('../src')
 
-let githubPatToken = process.env['GITHUB_PAT']
+let ssh = require('../src/ssh')
 
 let processName = path.basename(process.argv[1])
 let processArgs = process.argv.slice(2)
@@ -16,7 +16,39 @@ if (process.argv[1] === __filename) {
   process.exit(255)
 }
 
-if (
+let githubPatToken = process.env['GITHUB_PAT']
+let sshKeyPath = process.env['SSH_KEY_PATH']
+
+// Use SSH agent method if we have a key
+if (sshKeyPath) {
+  let sshKeyPassword = process.env['SSH_KEY_PASSWORD']
+  ssh
+    .startSshAgent()
+    .then(sshAgent => {
+      // Clean up the agent when the script stops
+      const killSshAgentProcess = () => {
+        sshAgent.process.kill()
+      }
+      process.on('SIGINT', killSshAgentProcess)
+      process.on('SIGTERM', killSshAgentProcess)
+      process.on('exit', killSshAgentProcess)
+
+      // Load the key
+      ssh.sshAddKey(sshAgent.socket, sshKeyPath, sshKeyPassword)
+
+      runProcess(`/usr/local/bin/${processName}`, processArgs).then(res => {
+        console.log(`${processName} exit code: ${res.code}, signal: ${res.signal}`)
+        process.exit(res.code)
+      })
+
+      console.log(sshAgent.socket)
+      console.log(sshAgent.process.kill())
+    })
+    .catch(e => {
+      console.log(e)
+      process.exit(255)
+    })
+} else if (
   githubPatToken &&
   fs.existsSync('package.json') &&
   !fs.existsSync('package.json.orig') &&

@@ -32,8 +32,11 @@ if (sshKeyPath && sshKeyPassword) {
     .then(sshAgent => {
       // Clean up the agent when the script stops
       let killSshAgentProcess = () => {
-        console.log('Closing ssh-agent')
-        sshAgent.process.kill()
+        if (!sshAgent.killing) {
+          console.log('Closing ssh-agent')
+          sshAgent.process.kill()
+          sshAgent.killing = true
+        }
       }
       process.on('SIGINT', killSshAgentProcess)
       process.on('SIGTERM', killSshAgentProcess)

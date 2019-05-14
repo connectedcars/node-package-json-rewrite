@@ -27,12 +27,11 @@ delete process.env['SSH_KEY_PASSWORD']
 
 // Use SSH agent method if we have a key
 if (sshKeyPath && sshKeyPassword) {
-  let killSshAgentProcess = () => {}
   ssh
     .startSshAgent()
     .then(sshAgent => {
       // Clean up the agent when the script stops
-      killSshAgentProcess = () => {
+      let killSshAgentProcess = () => {
         console.log('Closing ssh-agent')
         sshAgent.process.kill()
       }
@@ -44,20 +43,20 @@ if (sshKeyPath && sshKeyPassword) {
       ssh.sshAddKey(sshAgent.socket, sshKeyPath, sshKeyPassword)
       console.log('Loaded ssh keys:')
       console.log(ssh.sshListKeys(sshAgent.socket))
+      console.log(sshAgent.socket)
 
       runProcess(`/usr/local/bin/${processName}`, processArgs, {
         env: { ...process.env, SSH_AUTH_SOCK: sshAgent.socket }
       }).then(res => {
         console.log(`${processName} exit code: ${res.code}, signal: ${res.signal}`)
+        killSshAgentProcess()
         process.exit(res.code)
       })
     })
     .catch(e => {
-      console.log(e)
+      console.log(`Failed to start ssh agent:`)
+      console.error(e)
       process.exit(255)
-    })
-    .finally(() => {
-      killSshAgentProcess()
     })
 } else if (
   githubPatToken &&

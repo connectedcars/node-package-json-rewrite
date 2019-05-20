@@ -1,6 +1,6 @@
 # package-json-rewrite
 
-Simple wrapper to inject GitHub personal access tokens into package.json on npm/yarn install
+Simple wrapper to inject GitHub personal access tokens into package.json or load an ssh key into ssh-agent on npm/yarn install
 
 ## Installation
 
@@ -13,6 +13,13 @@ ln -s /usr/local/bin/package-json-rewrite /opt/connectedcars/bin/yarn
 export PATH=/opt/connectedcars/bin:$PATH
 ```
 
+## How to use
+
+Only one method will be used at a time, if both GITHUB_PAT and SSH_KEY_PATH/SSH_KEY_PASSWORD are set ssh-agent method will be used.
+
+* GITHUB_PAT: Set GitHub personal access token as an environment variable
+* SSH_KEY_PATH: Path to SSH key to load
+* SSH_KEY_PASSWORD: Password for SSH key
 
 ## VS Code
 

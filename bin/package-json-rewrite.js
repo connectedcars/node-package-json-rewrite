@@ -6,7 +6,7 @@ const { spawn } = require('child_process')
 
 const { packageJSONRewrite, packageLockJSONRewrite, findCmd } = require('../src')
 
-let githubPatToken = process.env['GITHUB_PAT']
+let ssh = require('../src/ssh')
 
 let processName = path.basename(process.argv[1])
 let processArgs = process.argv.slice(2)
@@ -23,7 +23,52 @@ if (process.argv[1] === __filename) {
   process.exit(255)
 }
 
-if (
+let githubPatToken = process.env['GITHUB_PAT']
+let sshKeyPath = process.env['SSH_KEY_PATH']
+let sshKeyPassword = process.env['SSH_KEY_PASSWORD']
+
+// Clean up environment
+delete processEnv['GITHUB_PAT']
+delete processEnv['SSH_KEY_PATH']
+delete processEnv['SSH_KEY_PASSWORD']
+
+// Use SSH agent method if we have a key
+if (sshKeyPath && sshKeyPassword) {
+  ssh
+    .startSshAgent()
+    .then(sshAgent => {
+      // Clean up the agent when the script stops
+      let killSshAgentProcess = () => {
+        if (!sshAgent.killing) {
+          console.log('Closing ssh-agent')
+          sshAgent.process.kill()
+          sshAgent.killing = true
+        }
+      }
+      process.on('SIGINT', killSshAgentProcess)
+      process.on('SIGTERM', killSshAgentProcess)
+      process.on('exit', killSshAgentProcess)
+
+      // Load the key
+      ssh.sshAddKey(sshAgent.socket, sshKeyPath, sshKeyPassword)
+      console.log('Loaded ssh keys:')
+      console.log(ssh.sshListKeys(sshAgent.socket))
+      console.log(sshAgent.socket)
+
+      runProcess(processPath, processArgs, {
+        env: { ...processEnv, SSH_AUTH_SOCK: sshAgent.socket }
+      }).then(res => {
+        console.log(`${processName} exit code: ${res.code}, signal: ${res.signal}`)
+        killSshAgentProcess()
+        process.exit(res.code)
+      })
+    })
+    .catch(e => {
+      console.log(`Failed to start ssh agent:`)
+      console.error(e)
+      process.exit(255)
+    })
+} else if (
   githubPatToken &&
   fs.existsSync('package.json') &&
   !fs.existsSync('package.json.orig') &&

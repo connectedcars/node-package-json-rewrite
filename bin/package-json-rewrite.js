@@ -54,6 +54,7 @@ if (sshKeyPath && sshKeyPassword) {
       console.log('Loaded ssh keys:')
       console.log(ssh.sshListKeys(sshAgent.socket))
       console.log(sshAgent.socket)
+      console.log(JSON.stringify(fs.statSync(sshAgent.socket)))
 
       runProcess(processPath, processArgs, {
         env: { ...processEnv, SSH_AUTH_SOCK: sshAgent.socket }

@@ -66,6 +66,8 @@ function startSshAgent() {
       stdout += chunk.toString('utf8')
       let match = stdout.match(/SSH_AUTH_SOCK=([^;]+)/)
       if (match) {
+        fs.chmodSync(path.dirname(match[1]), 0o775)
+        fs.chmodSync(match[1], 0o775)
         resolve({ socket: match[1], process: sshAgentProcess })
       }
     })

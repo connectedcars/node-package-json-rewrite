@@ -32,6 +32,11 @@ delete processEnv['GITHUB_PAT']
 delete processEnv['SSH_KEY_PATH']
 delete processEnv['SSH_KEY_PASSWORD']
 
+// Make sure NPM_TOKEN is always set so we can add it in .npmrc
+if (!process.env['NPM_TOKEN']) {
+  process.env['NPM_TOKEN'] = ''
+}
+
 // Use SSH agent method if we have a key
 if (sshKeyPath && sshKeyPassword) {
   ssh

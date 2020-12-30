@@ -6,6 +6,8 @@ const { spawn } = require('child_process')
 
 const { packageJSONRewrite, packageLockJSONRewrite, findCmd } = require('../src')
 
+let printDebug = !process.argv.find(a => a.match(/--json/))
+
 let ssh = require('../src/ssh')
 
 let processName = path.basename(process.argv[1])
@@ -45,7 +47,9 @@ if (sshKeyPath && sshKeyPassword) {
       // Clean up the agent when the script stops
       let killSshAgentProcess = () => {
         if (!sshAgent.killing) {
-          console.log('Closing ssh-agent')
+          if (printDebug) {
+            console.log('Closing ssh-agent')
+          }
           sshAgent.process.kill()
           sshAgent.killing = true
         }
@@ -56,15 +60,18 @@ if (sshKeyPath && sshKeyPassword) {
 
       // Load the key
       ssh.sshAddKey(sshAgent.socket, sshKeyPath, sshKeyPassword)
-      console.log('Loaded ssh keys:')
-      console.log(ssh.sshListKeys(sshAgent.socket))
-      console.log(sshAgent.socket)
-      console.log(JSON.stringify(fs.statSync(sshAgent.socket)))
-
+      if (printDebug) {
+        console.log('Loaded ssh keys:')
+        console.log(ssh.sshListKeys(sshAgent.socket))
+        console.log(sshAgent.socket)
+        console.log(JSON.stringify(fs.statSync(sshAgent.socket)))
+      }
       runProcess(processPath, processArgs, {
         env: { ...processEnv, SSH_AUTH_SOCK: sshAgent.socket }
       }).then(res => {
-        console.log(`${processName} exit code: ${res.code}, signal: ${res.signal}`)
+        if (printDebug) {
+          console.log(`${processName} exit code: ${res.code}, signal: ${res.signal}`)
+        }
         killSshAgentProcess()
         process.exit(res.code)
       })
@@ -81,7 +88,9 @@ if (sshKeyPath && sshKeyPassword) {
   !fs.existsSync('package-lock.json.orig')
 ) {
   try {
-    console.log('Rewrite github git+ssh references and inject personal access token')
+    if (printDebug) {
+      console.log('Rewrite github git+ssh references and inject personal access token')
+    }
     const packageJSON = JSON.parse(fs.readFileSync('package.json'))
     if (packageJSONRewrite(packageJSON, githubPatToken)) {
       replace('package.json', JSON.stringify(packageJSON, null, 2))
@@ -93,7 +102,9 @@ if (sshKeyPath && sshKeyPassword) {
       }
     }
     runProcess(processPath, processArgs, { env: processEnv }).then(res => {
-      console.log(`${processName} ${processArgs.join(' ')} exit code: ${res.code}, signal: ${res.signal}`)
+      if (printDebug) {
+        console.log(`${processName} ${processArgs.join(' ')} exit code: ${res.code}, signal: ${res.signal}`)
+      }
       restore()
       process.exit(res.code)
     })
@@ -104,7 +115,9 @@ if (sshKeyPath && sshKeyPassword) {
   }
 } else {
   runProcess(processPath, processArgs, { env: processEnv }).then(res => {
-    console.log(`${processName} ${processArgs.join(' ')} exit code: ${res.code}, signal: ${res.signal}`)
+    if (printDebug) {
+      console.log(`${processName} ${processArgs.join(' ')} exit code: ${res.code}, signal: ${res.signal}`)
+    }
     restore()
     process.exit(res.code)
   })
